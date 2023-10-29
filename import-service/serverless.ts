@@ -24,6 +24,11 @@ const serverlessConfiguration: AWS = {
         Action: ['s3:PutObject', 's3:PutObjectTagging', 's3:GetObject', 's3:GetObjectTagging', 's3:DeleteObject'],
         Resource: 'arn:aws:s3:::${self:custom.bucketName}/*',
       },
+      {
+        Effect: 'Allow',
+        Action: ['sqs:SendMessage'],
+        Resource: 'arn:aws:sqs:us-east-1:858350789047:catalogItemsQueue',
+      },
     ],
   },
   resources: {

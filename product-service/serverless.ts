@@ -3,6 +3,7 @@ import type { AWS } from '@serverless/typescript';
 import getProductsList from '@functions/get-products-list';
 import getProductsById from '@functions/get-products-by-id';
 import createProduct from '@functions/create-product';
+import catalogBatchProcess from '@functions/catalog-batch-process';
 
 const serverlessConfiguration: AWS = {
   service: 'product-service',
@@ -20,12 +21,20 @@ const serverlessConfiguration: AWS = {
       NODE_OPTIONS: '--enable-source-maps --stack-trace-limit=1000',
       TABLE_NAME: '${self:custom.tableName}',
       STOCK_TABLE_NAME: '${self:custom.stockTableName}',
+      SNS_TOPIC_ARN: 'arn:aws:sns:us-east-1:858350789047:createProductTopic',
     },
     iamRoleStatements: [
       {
         Effect: 'Allow',
         Action: ['dynamodb:*'],
         Resource: '*',
+      },
+      {
+        Effect: 'Allow',
+        Action: ['sns:Publish'],
+        Resource: {
+          Ref: 'CreateProductSNS',
+        },
       },
     ],
   },
@@ -75,10 +84,48 @@ const serverlessConfiguration: AWS = {
           },
         },
       },
+      CatalogItemsSQS: {
+        Type: 'AWS::SQS::Queue',
+        Properties: {
+          QueueName: 'catalogItemsQueue',
+        },
+      },
+      CreateProductSNS: {
+        Type: 'AWS::SNS::Topic',
+        Properties: {
+          TopicName: 'createProductTopic',
+        },
+      },
+      EmailSubscriptionSmall: {
+        Type: 'AWS::SNS::Subscription',
+        Properties: {
+          Endpoint: 'hegyidavid2001@gmail.com',
+          Protocol: 'email',
+          TopicArn: {
+            Ref: 'CreateProductSNS',
+          },
+          FilterPolicy: {
+            amount: ['Small'],
+          },
+        },
+      },
+      EmailSubscriptionBig: {
+        Type: 'AWS::SNS::Subscription',
+        Properties: {
+          Endpoint: 'dez1dav3@gmail.com',
+          Protocol: 'email',
+          TopicArn: {
+            Ref: 'CreateProductSNS',
+          },
+          FilterPolicy: {
+            amount: ['Big'],
+          },
+        },
+      },
     },
   },
   // import the function via paths
-  functions: { getProductsList, getProductsById, createProduct },
+  functions: { getProductsList, getProductsById, createProduct, catalogBatchProcess },
   package: { individually: true },
   custom: {
     esbuild: {
