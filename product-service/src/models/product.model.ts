@@ -1,10 +1,11 @@
 export interface Product {
-  id: string;
+  id?: string;
   title: string;
   description: string;
   price: number;
 }
 
 export interface ProductWithStock extends Product {
+  stockId?: string;
   count: number;
 }
